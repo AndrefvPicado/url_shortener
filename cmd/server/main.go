@@ -18,7 +18,7 @@ func main() {
 	mux.HandleFunc("/redirect/", handlers.RedirectHandler)
 
 	// Initialize dependencies
-	postgresRepo, err := repository.NewPostgresRepo("postgres://postgres:1603@localhost:5432/url_shortener")
+	postgresRepo, err := repository.NewPostgresRepo("postgres://postgres:1603@localhost:5432/url_shortener?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Failed to initialize PostgreSQL: %v", err)
 	}
