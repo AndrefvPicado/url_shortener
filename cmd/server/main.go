@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"url-shortener-service/config"
 	"url-shortener-service/internal/handlers"
+	"url-shortener-service/internal/repository"
 )
 
 func main() {
@@ -15,6 +16,15 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/shorten", handlers.CreateShortURLHandler)
 	mux.HandleFunc("/redirect/", handlers.RedirectHandler)
+
+	// Initialize dependencies
+	postgresRepo, err := repository.NewPostgresRepo("postgres://postgres:1603@localhost:5432/url_shortener")
+	if err != nil {
+		log.Fatalf("Failed to initialize PostgreSQL: %v", err)
+	}
+	repository.PostgresRepoInstance = postgresRepo
+
+	repository.RedisRepoInstance = repository.NewRedisRepo("localhost:6379")
 
 	// Start server
 	serverAddress := ":" + config.ServerPort

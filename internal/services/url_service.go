@@ -1,19 +1,24 @@
 package services
 
 import (
-	"errors"
+	"time"
 	"url-shortener-service/internal/repository"
 	"url-shortener-service/internal/utils"
 )
+
+const cacheExpiration = 24 * time.Hour
 
 func ShortenURL(originalURL string) (string, error) {
 	// generate a short code
 	shortCode := utils.GenerateShortCode(originalURL)
 
-	// save the short code and original URL to the database
-	if err := repository.SaveURL(shortCode, originalURL); err != nil {
+	//save to postgres
+	if err := repository.PostgresRepoInstance.SaveURL(shortCode, originalURL); err != nil {
 		return "", err
 	}
+
+	// Cache the result in Redis
+	repository.RedisRepoInstance.CacheURL(shortCode, originalURL, cacheExpiration)
 
 	// construct the short URL
 	shortURL := "http://localhost:8080/redirect/" + shortCode
@@ -22,11 +27,19 @@ func ShortenURL(originalURL string) (string, error) {
 }
 
 func FetchOriginalURL(shortCode string) (string, error) {
-	// fetch the original URL from the database
-	originalURL, err := repository.GetOriginalURL(shortCode)
-	if err != nil {
-		return "", errors.New("original URL not found")
+	// Check Redis cache first
+	originalURL, err := repository.RedisRepoInstance.GetCachedURL(shortCode)
+	if err == nil && originalURL != "" {
+		return originalURL, nil
 	}
 
+	// Fallback to PostgreSQL if not found in Redis
+	originalURL, err = repository.PostgresRepoInstance.GetOriginalURL(shortCode)
+	if err != nil || originalURL == "" {
+		return "", err
+	}
+
+	// Cache the URL for future requests
+	repository.RedisRepoInstance.CacheURL(shortCode, originalURL, cacheExpiration)
 	return originalURL, nil
 }
