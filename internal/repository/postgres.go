@@ -29,7 +29,10 @@ func NewPostgresRepo(connStr string) (*PostgresRepo, error) {
 
 // SaveURL saves the short code and original URL to the database.
 func (p *PostgresRepo) SaveURL(shortCode string, originalURL string) error {
-	query := `INSERT INTO urls (short_code, original_url) VALUES ($1, $2)`
+	query := `INSERT INTO urls (short_code, original_url) 
+              VALUES ($1, $2) 
+              ON CONFLICT (short_code) DO NOTHING`
+
 	_, err := p.db.Exec(query, shortCode, originalURL)
 	if err != nil {
 		return err
