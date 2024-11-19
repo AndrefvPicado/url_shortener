@@ -2,20 +2,12 @@
 A URL shortener service that not only shortens URLs but can handle high volumes of requests concurrently
 
 
-# Instructions
-- start postgres db
-    - `brew services start postgresql`
-    - `psql --version`
-- start redis
-- run the app
-- use the api
-
 
 # URL Shortening Flow:
  - Client sends POST request with original URL
  - Handler parses request and validates
  - Service generates short code
- - Saves to PostgreSQL (with ON CONFLICT DO NOTHING)
+ - Saves to PostgreSQL 
  - Caches in Redis
  - Returns short URL to client
 
