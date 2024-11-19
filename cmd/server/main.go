@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"url-shortener-service/config"
@@ -18,7 +19,14 @@ func main() {
 	mux.HandleFunc("/redirect/", handlers.RedirectHandler)
 
 	// Initialize dependencies
-	postgresRepo, err := repository.NewPostgresRepo("postgres://postgres:1111@localhost:5432/url_shortener?sslmode=disable")
+	postgresRepo, err := repository.NewPostgresRepo(
+		fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+			config.DBUser,
+			config.DBPass,
+			config.DBHost,
+			config.DBPort,
+			config.DBName,
+		))
 	if err != nil {
 		log.Fatalf("Failed to initialize PostgreSQL: %v", err)
 	}
